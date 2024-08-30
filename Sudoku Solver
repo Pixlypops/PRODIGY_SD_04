@@ -1,0 +1,144 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <random>
+#include <chrono>
+
+using namespace std;
+
+// Define the size of the Sudoku grid
+const int N = 9;
+
+// Function to print the Sudoku grid
+void printGrid(const vector<vector<int>>& grid) {
+    for (int row = 0; row < N; row++) {
+        for (int col = 0; col < N; col++) {
+            cout << grid[row][col] << " ";
+        }
+        cout << endl;
+    }
+}
+
+// Function to check if it's safe to place a number at grid[row][col]
+bool isSafe(const vector<vector<int>>& grid, int row, int col, int num) {
+    // Check the row
+    for (int x = 0; x < N; x++)
+        if (grid[row][x] == num)
+            return false;
+
+    // Check the column
+    for (int x = 0; x < N; x++)
+        if (grid[x][col] == num)
+            return false;
+
+    // Check the 3x3 subgrid
+    int startRow = row - row % 3, startCol = col - col % 3;
+    for (int i = 0; i < 3; i++)
+        for (int j = 0; j < 3; j++)
+            if (grid[i + startRow][j + startCol] == num)
+                return false;
+
+    return true;
+}
+
+// Backtracking algorithm to solve the Sudoku
+bool solveSudoku(vector<vector<int>>& grid) {
+    int row, col;
+    bool emptyFound = false;
+
+    for (row = 0; row < N; row++) {
+        for (col = 0; col < N; col++) {
+            if (grid[row][col] == 0) {
+                emptyFound = true;
+                break;
+            }
+        }
+        if (emptyFound)
+            break;
+    }
+
+    if (!emptyFound)
+        return true; // No empty cell left, puzzle solved
+
+    for (int num = 1; num <= N; num++) {
+        if (isSafe(grid, row, col, num)) {
+            grid[row][col] = num;
+
+            if (solveSudoku(grid))
+                return true;
+
+            grid[row][col] = 0; // Undo the assignment
+        }
+    }
+    return false; // Trigger backtracking
+}
+
+// Function to generate a random Sudoku grid
+vector<vector<int>> generateSudoku() {
+    vector<vector<int>> grid(N, vector<int>(N, 0));
+
+    // Fill the diagonal 3x3 subgrids to ensure the grid is solvable
+    auto seed = chrono::high_resolution_clock::now().time_since_epoch().count();
+    for (int i = 0; i < N; i += 3) {
+        vector<int> nums(N);
+        iota(nums.begin(), nums.end(), 1); // Fill with numbers 1 to 9
+        shuffle(nums.begin(), nums.end(), default_random_engine(seed));
+        for (int j = 0; j < 3; j++) {
+            for (int k = 0; k < 3; k++) {
+                grid[i + j][i + k] = nums[j * 3 + k];
+            }
+        }
+    }
+
+    // Solve the partially filled grid to complete it
+    solveSudoku(grid);
+
+    // Remove random elements to create the puzzle
+    int cellsToRemove = 40; // Adjust the difficulty by changing the number of removed cells
+    while (cellsToRemove > 0) {
+        int row = rand() % N;
+        int col = rand() % N;
+        if (grid[row][col] != 0) {
+            grid[row][col] = 0;
+            cellsToRemove--;
+        }
+    }
+
+    return grid;
+}
+
+int main() {
+    vector<vector<int>> grid(N, vector<int>(N, 0));
+    char choice;
+
+    cout << "Would you like to input your own Sudoku grid (y) or generate a random one (n)? ";
+    cin >> choice;
+
+    if (choice == 'y') {
+        cout << "Enter your Sudoku grid (use 0 for empty cells):\n";
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < N; j++) {
+                cin >> grid[i][j];
+            }
+        }
+    } else {
+        grid = generateSudoku();
+        cout << "Generated Sudoku grid:\n";
+        printGrid(grid);
+    }
+
+    cout << "Try to solve it yourself. Press 'n' when you want the program to solve it.\n";
+    char solveChoice;
+    do {
+        cin >> solveChoice;
+    } while (solveChoice != 'n');
+
+    if (solveSudoku(grid)) {
+        cout << "Solved Sudoku grid:\n";
+        printGrid(grid);
+    } else {
+        cout << "No solution exists for the given Sudoku grid.\n";
+    }
+
+    return 0;
+}
