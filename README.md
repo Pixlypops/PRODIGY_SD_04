@@ -26,7 +26,7 @@ To compile and run this project, you'll need:
 
 1. Clone this repository:
     ```bash
-    git clone https://github.com/yourusername/sudoku-solver.git
+    git clone https://github.com/pixlypops/sudoku-solver.git
     ```
 2. Navigate to the project directory:
     ```bash
